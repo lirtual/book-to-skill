@@ -82,6 +82,18 @@ class WorkflowTests(unittest.TestCase):
             (self.workspace / b["file"]).read_text() for b in plan["blocks"]))
         self.assertEqual(self.workspace.stat().st_mode & 0o777, 0o700)
         self.assertEqual((self.workspace / "blocks" / "B0001.txt").stat().st_mode & 0o777, 0o600)
+        for block in plan["blocks"]:
+            self.run_cli("mark", "--workspace", str(self.workspace), "--block", block["id"],
+                         "--status", "checked", "--note", "Synthetic source has no executable steps")
+        (self.workspace / "candidates.json").write_text(json.dumps({
+            "candidates": [],
+            "no_candidate_reason": "The synthetic chapter labels name methods but provide no steps.",
+        }), encoding="utf-8")
+        report = json.loads(self.run_cli("report", "--workspace", str(self.workspace)).stdout)
+        self.assertEqual(report["review_gate"], "Pass")
+        self.assertEqual(report["blocks"]["checked"], len(plan["blocks"]))
+        self.assertEqual(report["candidates"], 0)
+        self.assertEqual(report["installation"], "Not authorized / not performed")
 
     def test_rejects_review_workspace_inside_public_repo(self) -> None:
         self.book.write_text("Text", encoding="utf-8")
