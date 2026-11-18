@@ -1,9 +1,9 @@
 ---
-name: book-to-skill-review
+name: book-to-skill
 description: Review a legally usable full book, identify zero or more genuinely actionable independent skills, validate isolated candidates, and ask the user before installing any candidate on ChatGPT or Codex.
 ---
 
-# Book-to-Skill · review before install
+# Book to Skill
 
 Use this workflow when the user provides a book they are authorized to process and requests reusable Agent Skills. Follow the repository's [README.md](README.md) and [Spec #1](https://github.com/lirtual/book-to-skill/issues/1). This file is a **review workflow**; it does not grant book access, allow uploads, or approve installation.
 
