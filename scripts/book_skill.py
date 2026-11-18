@@ -179,15 +179,31 @@ def index(book: Path, workspace: Path, max_chars: int) -> dict:
             previous[1] != following[0] for previous, following in zip(parts, parts[1:])):
         raise WorkflowError("Coverage partition is incomplete")
     block_dir = workspace / "blocks"
-    block_dir.mkdir(mode=0o700)
+    if block_dir.is_symlink():
+        raise WorkflowError("Block directory must not be a symlink")
+    block_dir.mkdir(mode=0o700, exist_ok=True)
+    if not block_dir.is_dir() or block_dir.stat().st_mode & 0o077:
+        raise WorkflowError("Existing block directory must be private (0700)")
+    expected_names = {f"B{i:04d}.txt" for i in range(1, len(parts) + 1)}
+    for existing in block_dir.iterdir():
+        if (existing.name not in expected_names or existing.is_symlink()
+                or not existing.is_file()):
+            raise WorkflowError(f"Unexpected existing block path: {existing.name}")
     blocks = []
     for i, (start, end, section) in enumerate(parts, start=1):
         identifier = f"B{i:04d}"
         filename = f"blocks/{identifier}.txt"
         content = body[start:end]
-        with (workspace / filename).open("x", encoding="utf-8") as handle:
-            os.chmod(workspace / filename, 0o600)
-            handle.write(content)
+        path = workspace / filename
+        if path.exists() or path.is_symlink():
+            if (path.is_symlink() or not path.is_file()
+                    or path.stat().st_mode & 0o077
+                    or path.read_bytes() != content.encode("utf-8")):
+                raise WorkflowError(f"Existing block differs or is unsafe: {identifier}")
+        else:
+            with path.open("x", encoding="utf-8") as handle:
+                os.chmod(path, 0o600)
+                handle.write(content)
         blocks.append({
             "id": identifier, "file": filename, "section": section,
             "start_char": start, "end_char": end, "sha256": sha256_bytes(content.encode("utf-8")),
