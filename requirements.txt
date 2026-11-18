@@ -1,0 +1,3 @@
+# Upstream's official repository, pinned to the tested source revision.
+# Optional format dependencies are installed separately as needed; never silently.
+book-to-skill @ git+https://github.com/virgiliojr94/book-to-skill.git@e7bb659d3261491c8b28793dcb9102fa64a46c22
