@@ -88,7 +88,7 @@ python scripts/book_skill.py prepare \
 
 - `report` 的 `review_gate=Pass` 仅代表已登记文本块和候选的**流程预检查**完成；原书提取完整性、模型实际理解和 ChatGPT/Codex 宿主发现/触发均需要各自证据。
 - 无论 `report` 输出什么，**程序没有安装操作**。安装某一候选到 ChatGPT 或 Codex 前，必须分别征得用户明确批准；随后按宿主实际原生机制安装、验证触发与移除路径。不通过则保留在隔离目录。
-- 中断后已存在 `extracted/metadata.json` 且尚未有 `plan.json` 时，可使用 `python scripts/book_skill.py index --book <原书> --workspace <已有私有目录>` 继续建立审查索引；此操作重新核对原书内容指纹。已有 `plan.json` 不会被覆盖。
+- 中断后已存在 `extracted/metadata.json` 且尚未有 `plan.json` 时，可使用 `python scripts/book_skill.py index --book <原书> --workspace <已有私有目录>` 继续建立审查索引；此操作重新核对原书内容指纹，并复用内容完全一致、权限仍安全的既有分块。冲突、额外文件或不安全路径会停止执行且不覆盖原文件；已有 `plan.json` 不会被覆盖。
 - 仅删除**已确认属于本次任务**的私有目录；删除前确认用户不再需要候选和证据，避免不可恢复的数据损失。
 
 ## 开发验证
