@@ -144,6 +144,35 @@ class WorkflowTests(unittest.TestCase):
         self.run_cli("index", "--book", str(self.book), "--workspace", str(self.workspace), ok=False)
         self.assertFalse((self.workspace / "plan.json").exists())
 
+    def test_index_recovers_identical_blocks_after_interruption(self) -> None:
+        body = "A book with several meaningful sections and a repeatable index."
+        self.extracted(body)
+        block_dir = self.workspace / "blocks"
+        block_dir.mkdir(mode=0o700)
+        existing = block_dir / "B0001.txt"
+        existing.write_text(body[:12], encoding="utf-8")
+        existing.chmod(0o600)
+
+        plan = self.index(12)
+        self.assertEqual("".join(
+            (self.workspace / block["file"]).read_text(encoding="utf-8")
+            for block in plan["blocks"]), body)
+        self.assertEqual(existing.read_text(encoding="utf-8"), body[:12])
+        self.assertEqual(plan["blocks"][0]["status"], "pending")
+
+    def test_index_rejects_conflicting_existing_block_without_overwriting(self) -> None:
+        self.extracted("Source contents must not be silently overwritten")
+        block_dir = self.workspace / "blocks"
+        block_dir.mkdir(mode=0o700)
+        existing = block_dir / "B0001.txt"
+        existing.write_text("unrelated private material", encoding="utf-8")
+        existing.chmod(0o600)
+
+        self.run_cli("index", "--book", str(self.book), "--workspace", str(self.workspace),
+                     "--max-chars", "12", ok=False)
+        self.assertEqual(existing.read_text(encoding="utf-8"), "unrelated private material")
+        self.assertFalse((self.workspace / "plan.json").exists())
+
     def test_tampered_block_makes_report_fail(self) -> None:
         self.extracted("Original source")
         plan = self.index()
